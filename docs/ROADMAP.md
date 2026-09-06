@@ -1,24 +1,24 @@
 # Roadmap: FileRPC
 
 ## Phase 0 — Project Definition
-* [ ] Project definition
-* [ ] Problem statement
-* [ ] Requirements
-* [ ] Architecture
-* [ ] MVP definition
-* [ ] Scope definition
+* [x] Project definition
+* [x] Problem statement
+* [x] Requirements
+* [x] Architecture
+* [x] MVP definition
+* [x] Scope definition
 
 ## Phase 1 — Environment
-* [ ] Repository setup
-* [ ] Python environment
-* [ ] Dependencies
-* [ ] Git configuration
+* [x] Repository setup
+* [x] Python environment
+* [x] Dependencies
+* [x] Git configuration
 
 ## Phase 2 — File Processing Engine
-* [ ] SHA-256 implementation
+* [x] SHA-256 implementation
 * [ ] Image resizing implementation
 * [ ] PDF extraction implementation
-* [ ] Unit tests for engine
+* [x] Unit tests for engine (hashing)
 
 ## Phase 3 — Basic gRPC
 * [ ] gRPC setup and basics
