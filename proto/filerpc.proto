@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package filerpc;
+
+service FileProcessor {
+    rpc HashFile(HashRequest) returns (HashResponse);
+}
+
+message HashRequest {
+    string file_path = 1;
+}
+
+message HashResponse {
+    string sha256 = 1;
+}

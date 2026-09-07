@@ -10,7 +10,6 @@ from pypdf.generic import (
 
 from src.processing.pdf_extraction import extract_text_from_pdf
 
-
 def create_test_pdf(path: Path, text: str = "Hello FileRPC"):
     writer = PdfWriter()
     page = writer.add_blank_page(width=612, height=792)
