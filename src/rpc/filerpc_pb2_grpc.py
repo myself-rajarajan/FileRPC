@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import filerpc_pb2 as filerpc__pb2
+from src.rpc import filerpc_pb2 as filerpc__pb2
 
 GRPC_GENERATED_VERSION = '1.83.1'
 GRPC_VERSION = grpc.__version__
@@ -26,7 +26,8 @@ if _version_not_supported:
 
 
 class FileProcessorStub:
-    """Missing associated documentation comment in .proto file."""
+    """Existing service for client interaction
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -42,7 +43,8 @@ class FileProcessorStub:
 
 
 class FileProcessorServicer:
-    """Missing associated documentation comment in .proto file."""
+    """Existing service for client interaction
+    """
 
     def HashFile(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -67,7 +69,8 @@ def add_FileProcessorServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class FileProcessor:
-    """Missing associated documentation comment in .proto file."""
+    """Existing service for client interaction
+    """
 
     @staticmethod
     def HashFile(request,
@@ -86,6 +89,214 @@ class FileProcessor:
             '/filerpc.FileProcessor/HashFile',
             filerpc__pb2.HashRequest.SerializeToString,
             filerpc__pb2.HashResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class WorkerCoordinatorStub:
+    """Service for Worker-Coordinator interaction
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.RegisterWorker = channel.unary_unary(
+                '/filerpc.WorkerCoordinator/RegisterWorker',
+                request_serializer=filerpc__pb2.RegisterWorkerRequest.SerializeToString,
+                response_deserializer=filerpc__pb2.RegisterWorkerResponse.FromString,
+                _registered_method=True)
+        self.UpdateWorkerStatus = channel.unary_unary(
+                '/filerpc.WorkerCoordinator/UpdateWorkerStatus',
+                request_serializer=filerpc__pb2.UpdateWorkerStatusRequest.SerializeToString,
+                response_deserializer=filerpc__pb2.UpdateWorkerStatusResponse.FromString,
+                _registered_method=True)
+        self.GetTask = channel.unary_unary(
+                '/filerpc.WorkerCoordinator/GetTask',
+                request_serializer=filerpc__pb2.GetTaskRequest.SerializeToString,
+                response_deserializer=filerpc__pb2.GetTaskResponse.FromString,
+                _registered_method=True)
+        self.SubmitTaskResult = channel.unary_unary(
+                '/filerpc.WorkerCoordinator/SubmitTaskResult',
+                request_serializer=filerpc__pb2.SubmitTaskResultRequest.SerializeToString,
+                response_deserializer=filerpc__pb2.SubmitTaskResultResponse.FromString,
+                _registered_method=True)
+
+
+class WorkerCoordinatorServicer:
+    """Service for Worker-Coordinator interaction
+    """
+
+    def RegisterWorker(self, request, context):
+        """Registers a worker with the Coordinator
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateWorkerStatus(self, request, context):
+        """Updates the worker's status/information
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetTask(self, request, context):
+        """Allows a worker to request/poll for an assigned task
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SubmitTaskResult(self, request, context):
+        """Sends the completed task result back to the Coordinator
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_WorkerCoordinatorServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'RegisterWorker': grpc.unary_unary_rpc_method_handler(
+                    servicer.RegisterWorker,
+                    request_deserializer=filerpc__pb2.RegisterWorkerRequest.FromString,
+                    response_serializer=filerpc__pb2.RegisterWorkerResponse.SerializeToString,
+            ),
+            'UpdateWorkerStatus': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateWorkerStatus,
+                    request_deserializer=filerpc__pb2.UpdateWorkerStatusRequest.FromString,
+                    response_serializer=filerpc__pb2.UpdateWorkerStatusResponse.SerializeToString,
+            ),
+            'GetTask': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTask,
+                    request_deserializer=filerpc__pb2.GetTaskRequest.FromString,
+                    response_serializer=filerpc__pb2.GetTaskResponse.SerializeToString,
+            ),
+            'SubmitTaskResult': grpc.unary_unary_rpc_method_handler(
+                    servicer.SubmitTaskResult,
+                    request_deserializer=filerpc__pb2.SubmitTaskResultRequest.FromString,
+                    response_serializer=filerpc__pb2.SubmitTaskResultResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'filerpc.WorkerCoordinator', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('filerpc.WorkerCoordinator', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class WorkerCoordinator:
+    """Service for Worker-Coordinator interaction
+    """
+
+    @staticmethod
+    def RegisterWorker(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filerpc.WorkerCoordinator/RegisterWorker',
+            filerpc__pb2.RegisterWorkerRequest.SerializeToString,
+            filerpc__pb2.RegisterWorkerResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateWorkerStatus(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filerpc.WorkerCoordinator/UpdateWorkerStatus',
+            filerpc__pb2.UpdateWorkerStatusRequest.SerializeToString,
+            filerpc__pb2.UpdateWorkerStatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetTask(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filerpc.WorkerCoordinator/GetTask',
+            filerpc__pb2.GetTaskRequest.SerializeToString,
+            filerpc__pb2.GetTaskResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SubmitTaskResult(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/filerpc.WorkerCoordinator/SubmitTaskResult',
+            filerpc__pb2.SubmitTaskResultRequest.SerializeToString,
+            filerpc__pb2.SubmitTaskResultResponse.FromString,
             options,
             channel_credentials,
             insecure,

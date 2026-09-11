@@ -2,14 +2,99 @@ syntax = "proto3";
 
 package filerpc;
 
+// Existing service for client interaction
 service FileProcessor {
     rpc HashFile(HashRequest) returns (HashResponse);
 }
 
+// Service for Worker-Coordinator interaction
+service WorkerCoordinator {
+    // Registers a worker with the Coordinator
+    rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse);
+
+    // Updates the worker's status/information
+    rpc UpdateWorkerStatus(UpdateWorkerStatusRequest) returns (UpdateWorkerStatusResponse);
+
+    // Allows a worker to request/poll for an assigned task
+    rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+
+    // Sends the completed task result back to the Coordinator
+    rpc SubmitTaskResult(SubmitTaskResultRequest) returns (SubmitTaskResultResponse);
+}
+
+// Client RPC messages
 message HashRequest {
     string file_path = 1;
 }
 
 message HashResponse {
     string sha256 = 1;
+}
+
+// Worker registration and identification
+message RegisterWorkerRequest {
+    string worker_id = 1;             // Optional: if worker already has a persistent ID
+    string address = 2;               // Optional: IP address or hostname of the worker
+    repeated string capabilities = 3; // List of operations supported (e.g., "hash", "resize", "extract")
+}
+
+message RegisterWorkerResponse {
+    bool success = 1;
+    string worker_id = 2;             // Server-assigned or confirmed unique identifier
+    string message = 3;               // Feedback message (success or error details)
+}
+
+// Worker status and information
+enum WorkerStatus {
+    WORKER_STATUS_UNSPECIFIED = 0;
+    WORKER_STATUS_ONLINE = 1;
+    WORKER_STATUS_OFFLINE = 2;
+    WORKER_STATUS_BUSY = 3;
+    WORKER_STATUS_IDLE = 4;
+}
+
+message WorkerInfo {
+    string worker_id = 1;
+    string address = 2;
+    WorkerStatus status = 3;
+    repeated string capabilities = 4;
+}
+
+message UpdateWorkerStatusRequest {
+    string worker_id = 1;
+    WorkerStatus status = 2;
+}
+
+message UpdateWorkerStatusResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// Future task assignment
+message Task {
+    string task_id = 1;               // Unique task identifier
+    string task_type = 2;             // Type of processing (e.g., "hash", "resize", "extract")
+    string file_path = 3;             // Source path of the file to process
+}
+
+message GetTaskRequest {
+    string worker_id = 1;             // ID of the worker requesting a task
+}
+
+message GetTaskResponse {
+    bool has_task = 1;                // True if a task was assigned, false otherwise
+    Task task = 2;                    // The assigned task details (if has_task is true)
+}
+
+message SubmitTaskResultRequest {
+    string worker_id = 1;
+    string task_id = 2;
+    bool success = 3;
+    string result = 4;
+    string error_message = 5;
+}
+
+message SubmitTaskResultResponse {
+    bool success = 1;
+    string message = 2;
 }
