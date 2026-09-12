@@ -1,125 +1,516 @@
 # FileRPC
 
-An open-source distributed file-processing platform powered by Remote Procedure Call (RPC).
+**FileRPC** is an open-source distributed file-processing platform built using **Python and gRPC**.
 
-## Overview
+The goal of FileRPC is to allow clients to submit file-processing tasks to a central coordinator, which manages workers and distributes tasks for processing.
 
-FileRPC is a distributed system designed to handle file-processing tasks across multiple independent worker nodes. By leveraging RPC (Remote Procedure Call), the system allows clients to submit jobs to a central server, which then orchestrates the execution of these tasks on available workers. This architecture enables horizontal scaling and efficient management of resource-intensive file operations.
+The system is designed around a client-server-worker architecture where file-processing operations such as hashing, PDF extraction, and image resizing can be executed by distributed worker nodes.
 
-### Why FileRPC?
+---
 
-Processing large volumes of files or performing computationally expensive operations (like image resizing or PDF extraction) can be a bottleneck on a single machine. FileRPC solves this by distributing the workload, allowing for parallel processing and improved throughput.
+## Project Goals
 
-### The Role of RPC
+FileRPC aims to provide:
 
-RPC serves as the communication backbone, enabling seamless interaction between the Client, the RPC Server, and the Workers as if they were local function calls, while they may actually reside on different machines.
+* Distributed file processing
+* RPC-based communication using gRPC
+* Worker registration and management
+* Task creation and assignment
+* Worker capability management
+* Task execution
+* Task result submission
+* Task status tracking
+* Scalable worker architecture
+* Support for multiple file-processing operations
+* Reliable task and result management
 
-## Problem Statement
+---
 
-As file-processing requirements grow, single-node solutions often face performance degradation, lack of fault tolerance, and limited scalability. Manually managing a fleet of scripts across different servers is error-prone and inefficient. FileRPC provides a structured, automated, and scalable platform to handle these challenges by decoupling the task submission from its execution.
+## Architecture
 
-## Goals
-
-* **Practical RPC Implementation:** Demonstrate a robust gRPC-based communication layer.
-* **Distributed Processing:** Enable tasks to run across a network of workers.
-* **Multiple Worker Nodes:** Support dynamic registration and management of workers.
-* **Worker Management:** Monitor health and status of all active workers.
-* **Task Scheduling:** Efficiently distribute jobs based on worker availability.
-* **Fault Tolerance:** Detect and recover from worker or task failures.
-* **Job Monitoring:** Provide visibility into the lifecycle and history of all jobs.
-* **Open-source/Self-hosted Deployment:** Ensure the system is easy to deploy and maintain.
-
-## Initial Processing Tasks
-
-### SHA-256 File Hashing
-* **Input:** file
-* **Output:** SHA-256 hash
-
-### Image Resizing
-* **Input:** image + dimensions
-* **Output:** resized image
-
-### PDF Text Extraction
-* **Input:** PDF
-* **Output:** extracted text
-
-## High-Level Architecture
+The current architecture consists of three major components:
 
 ```text
-Client
-   |
-   | RPC
-   v
-RPC Server
-   |
-   +-------- Worker 1
-   |
-   +-------- Worker 2
-   |
-   +-------- Worker 3
+                    +----------------+
+                    |     Client     |
+                    +-------+--------+
+                            |
+                            | gRPC
+                            v
+                    +----------------+
+                    | FileRPC Server |
+                    |  Coordinator   |
+                    +-------+--------+
+                            |
+                 +----------+----------+
+                 |                     |
+                 v                     v
+          Worker Management       Task Manager
+                 |                     |
+                 +----------+----------+
+                            |
+                            | Task Assignment
+                            v
+                    +----------------+
+                    |     Worker     |
+                    +-------+--------+
+                            |
+                            | Execute Task
+                            v
+                    +----------------+
+                    | File Processing|
+                    |     Engine     |
+                    +-------+--------+
+                            |
+                            | Result
+                            v
+                    +----------------+
+                    | FileRPC Server |
+                    +----------------+
 ```
 
-The Client submits requests to the RPC Server. The Server manages the task lifecycle and delegates the actual processing to one of the available Workers.
+### Components
 
-## Core Components
+#### Client
 
-* **Client:** The interface through which users or other systems submit file-processing jobs.
-* **RPC Server:** The central orchestrator that receives jobs, manages workers, and returns results.
-* **Worker:** Independent nodes that perform the actual file-processing tasks (hashing, resizing, etc.).
-* **Worker Registry:** A component within the server that tracks active workers and their health.
-* **Task Queue:** Holds incoming jobs before they are assigned to workers.
-* **Scheduler:** Logic that determines which worker should receive which task.
-* **Fault Tolerance:** Mechanisms for retrying failed jobs and detecting offline workers.
-* **Database:** Persists job history, worker status, and system configuration.
-* **Dashboard:** A web-based interface for monitoring and managing the system.
+The client communicates with the FileRPC server using gRPC.
 
-## Development Strategy
+The client will eventually be responsible for submitting file-processing tasks and retrieving task results.
 
-FileRPC is developed using strict compartmentalization. We implement one phase at a time, ensuring each phase is fully tested and verified before moving to the next. This incremental approach ensures stability and clear progress.
+#### FileRPC Server
 
-## Design Principles
+The server acts as the central coordinator.
 
-* **Modularity:** Each component has a clearly defined responsibility.
-* **Separation of Concerns:** Decoupling submission, orchestration, and execution.
-* **Incremental Development:** Building the system step-by-step through defined phases.
-* **Fault Tolerance:** Designing for failure at every level.
-* **Extensibility:** Making it easy to add new file-processing operations.
-* **Open Source:** Maintaining a clean, well-documented, and accessible codebase.
+It manages:
 
-## Planned Technology Stack
+* Worker registration
+* Worker status
+* Task management
+* Task assignment
+* Task results
 
-| Component            | Technology       |
-| -------------------- | ---------------- |
-| Programming Language | Python           |
-| RPC                  | gRPC             |
-| Interface Definition | Protocol Buffers |
-| Database             | PostgreSQL       |
-| Task Queue           | Redis            |
-| Frontend             | React            |
-| API Layer            | FastAPI          |
-| Containerization     | Docker           |
-| Version Control      | Git              |
+#### Worker
 
-*Note: These are planned technologies and may be adjusted later if technically justified.*
+Workers are processing nodes that:
 
-## Project Status
+1. Register with the server
+2. Report their capabilities
+3. Request available tasks
+4. Execute tasks
+5. Submit results back to the server
 
-**Current Phase: Phase 0 — Project Definition**
+#### File Processing Engine
 
-## Roadmap
+The processing engine contains the actual file-processing operations.
 
-1. Phase 0 — Project Definition
-2. Phase 1 — Environment
-3. Phase 2 — File Processing Engine
-4. Phase 3 — Basic gRPC
-5. Phase 4 — RPC Server
-6. Phase 5 — Single Worker
-7. Phase 6 — Distributed Workflow
-8. Phase 7 — Multiple Workers
-9. Phase 8 — Worker Registry
-10. Phase 9 — Task Queue + Scheduler
-11. Phase 10 — Fault Tolerance
-12. Phase 11 — Database
-13. Phase 12 — Dashboard
-14. Phase 13 — Docker
-15. Phase 14 — Open-Source Release
+Current operations include:
+
+* SHA-256 file hashing
+* PDF text extraction
+* Image resizing
+
+---
+
+## Technology Stack
+
+| Technology       | Purpose                         |
+| ---------------- | ------------------------------- |
+| Python           | Main programming language       |
+| gRPC             | RPC communication               |
+| Protocol Buffers | Service and message definitions |
+| pytest           | Testing                         |
+| Git              | Version control                 |
+| GitHub           | Source code hosting             |
+
+---
+
+## Project Structure
+
+```text
+FileRPC/
+│
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── PROJECT.md
+│   └── ROADMAP.md
+│
+├── proto/
+│   └── filerpc.proto
+│
+├── src/
+│   ├── client/
+│   │   ├── __init__.py
+│   │   └── client.py
+│   │
+│   ├── processing/
+│   │   ├── __init__.py
+│   │   ├── hashing.py
+│   │   ├── pdf_extraction.py
+│   │   └── resizing.py
+│   │
+│   ├── rpc/
+│   │   ├── __init__.py
+│   │   ├── filerpc_pb2.py
+│   │   └── filerpc_pb2_grpc.py
+│   │
+│   ├── server/
+│   │   ├── __init__.py
+│   │   ├── server.py
+│   │   ├── task_manager.py
+│   │   └── worker_manager.py
+│   │
+│   └── worker/
+│       ├── __init__.py
+│       └── worker.py
+│
+├── tests/
+│   ├── test_hashing.py
+│   ├── test_pdf_extraction.py
+│   ├── test_resizing.py
+│   ├── test_task_manager.py
+│   ├── test_worker_manager.py
+│   └── test_server.py
+│
+├── .gitignore
+├── LICENSE
+├── README.md
+└── requirements.txt
+```
+
+---
+
+## RPC Services
+
+FileRPC currently defines two main RPC services.
+
+### FileProcessor
+
+The `FileProcessor` service handles file-processing operations.
+
+Current RPC:
+
+```text
+HashFile
+```
+
+### WorkerCoordinator
+
+The `WorkerCoordinator` service manages workers and tasks.
+
+Current RPC methods:
+
+```text
+RegisterWorker
+UpdateWorkerStatus
+GetTask
+SubmitTaskResult
+```
+
+---
+
+## Current Processing Operations
+
+### SHA-256 File Hashing
+
+FileRPC can calculate the SHA-256 hash of a file using a buffered file-reading approach.
+
+Example result:
+
+```text
+SHA-256:
+9f8d47a33cdd02a542204b45196b0d83dceb32565077e0e692c0db634e04b2c0
+```
+
+### PDF Text Extraction
+
+The processing engine supports extracting text from PDF files.
+
+### Image Resizing
+
+The processing engine supports resizing image files.
+
+---
+
+## Worker Lifecycle
+
+A worker currently follows this workflow:
+
+```text
+Start Worker
+     |
+     v
+Register Worker
+     |
+     v
+Update Worker Status
+     |
+     v
+Request Task
+     |
+     v
+Receive Task
+     |
+     v
+Execute Task
+     |
+     v
+Submit Result
+     |
+     v
+Task Completed
+```
+
+---
+
+## Task Lifecycle
+
+Tasks currently follow this lifecycle:
+
+```text
+PENDING
+   |
+   v
+ASSIGNED
+   |
+   v
+COMPLETED
+```
+
+If a task fails:
+
+```text
+PENDING
+   |
+   v
+ASSIGNED
+   |
+   v
+FAILED
+```
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/myself-rajarajan/FileRPC.git
+cd FileRPC
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate the virtual environment on Windows:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Running the Tests
+
+Run the complete test suite:
+
+```bash
+python -m pytest -q
+```
+
+Current test result:
+
+```text
+23 passed, 9 subtests passed
+```
+
+---
+
+## Running the Server
+
+Start the FileRPC server:
+
+```bash
+python -m src.server.server
+```
+
+The server runs on:
+
+```text
+localhost:50051
+```
+
+---
+
+## Running the Worker
+
+In another terminal:
+
+```bash
+python -m src.worker.worker
+```
+
+The worker connects to the FileRPC server, registers itself, requests a task, executes the task, and submits the result.
+
+---
+
+## Development Roadmap
+
+### Completed
+
+* Project initialization
+* File-processing engine
+* SHA-256 hashing
+* PDF extraction
+* Image resizing
+* gRPC infrastructure
+* Protocol Buffer definitions
+* FileProcessor RPC
+* WorkerCoordinator RPC
+* Worker registration
+* Worker status management
+* Task management
+* Task assignment
+* Worker task execution
+* Task result submission
+* Task completion tracking
+* Unit and integration-level testing
+
+### Planned
+
+* Dynamic task submission API
+* Improved worker status lifecycle
+* Multiple worker support
+* Worker capability-based task assignment
+* Worker selection and load balancing
+* Distributed file transfer
+* Task IDs and job tracking
+* Retry mechanism
+* Failure handling
+* CLI interface
+* Integration testing
+* Improved documentation
+* Production deployment
+
+---
+
+# Project Progress Log
+
+This section records the development progress of FileRPC. New progress will be added here as the project evolves.
+
+## September 2026
+
+### Phase 1 — Project Initialization
+
+* [x] Created FileRPC project repository.
+* [x] Created initial project structure.
+* [x] Added project documentation.
+* [x] Added `.gitignore`.
+* [x] Added project license.
+
+### Phase 2 — File Processing Engine
+
+* [x] Implemented SHA-256 file hashing.
+* [x] Added buffered file reading for hashing.
+* [x] Implemented PDF text extraction.
+* [x] Implemented image resizing.
+* [x] Added unit tests for processing components.
+
+### Phase 3 — RPC Infrastructure
+
+* [x] Installed `grpcio`.
+* [x] Installed `grpcio-tools`.
+* [x] Created `proto/filerpc.proto`.
+* [x] Generated Python gRPC files.
+* [x] Implemented `FileProcessor` service.
+* [x] Implemented `HashFile` RPC.
+* [x] Created the FileRPC server.
+* [x] Created the FileRPC client.
+* [x] Verified RPC-based SHA-256 hashing.
+
+### Phase 4 — Worker Management
+
+* [x] Implemented `WorkerManager`.
+* [x] Added worker registration.
+* [x] Added worker IDs.
+* [x] Added worker addresses.
+* [x] Added worker capabilities.
+* [x] Added worker status management.
+* [x] Added worker manager tests.
+
+### Phase 5 — Task Management
+
+* [x] Implemented `TaskManager`.
+* [x] Added task creation.
+* [x] Added task IDs.
+* [x] Added task queue.
+* [x] Added task assignment.
+* [x] Added task lookup by task ID.
+* [x] Added task manager tests.
+
+### Phase 6 — Worker Coordination
+
+* [x] Implemented `WorkerCoordinator`.
+* [x] Implemented worker registration through RPC.
+* [x] Implemented worker status updates through RPC.
+* [x] Implemented task requesting through RPC.
+* [x] Implemented worker-side task execution.
+* [x] Verified SHA-256 task execution by the worker.
+
+### Phase 7 — Task Result Submission
+
+* [x] Added `SubmitTaskResult` RPC.
+* [x] Implemented successful result submission.
+* [x] Implemented failed task result reporting.
+* [x] Updated task status to `COMPLETED`.
+* [x] Stored task results.
+* [x] Added server tests for result submission.
+* [x] Verified the complete worker-to-server result flow.
+
+### Current Test Status
+
+```text
+23 passed, 9 subtests passed
+```
+
+### Current Working Flow
+
+```text
+Worker Registration
+        |
+        v
+Worker Status Update
+        |
+        v
+Request Task
+        |
+        v
+Receive Task
+        |
+        v
+Execute SHA-256
+        |
+        v
+Submit Task Result
+        |
+        v
+Server Stores Result
+        |
+        v
+Task Status = COMPLETED
+```
+
+### Current Development Status
+
+**Core RPC communication, worker management, task management, task execution, and task result submission are implemented and tested.**
+
+**Next development milestone:** Replace the temporary hard-coded task with a proper task submission API that allows clients to dynamically create file-processing tasks.
