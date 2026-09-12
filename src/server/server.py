@@ -86,7 +86,7 @@ class WorkerCoordinator(
         )
 
     def SubmitTaskResult(self, request, context):
-        task = None
+        task = self.task_manager.get_task(request.task_id)
 
         for item in self.task_manager.get_tasks():
             if item["task_id"] == request.task_id:

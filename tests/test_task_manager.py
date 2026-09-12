@@ -35,3 +35,17 @@ def test_no_task_available():
     task = manager.get_next_task()
 
     assert task is None
+    
+def test_get_task():
+    manager = TaskManager()
+    
+    task_id = manager.add_task(
+        "hash",
+        "sample.txt",
+    )
+    
+    task = manager.get_task(task_id)
+    
+    assert task is not None
+    assert task["task_id"] == task_id
+    assert task["status"] == "PENDING"

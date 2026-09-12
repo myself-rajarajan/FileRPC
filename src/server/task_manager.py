@@ -25,5 +25,12 @@ class TaskManager:
 
         return None
 
+    def get_task(self, task_id):
+        for task in self.tasks:
+            if task["task_id"] == task_id:
+                return task
+
+        return None
+
     def get_tasks(self):
         return self.tasks
