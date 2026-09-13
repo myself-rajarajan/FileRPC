@@ -15,6 +15,9 @@ service WorkerCoordinator {
     // Updates the worker's status/information
     rpc UpdateWorkerStatus(UpdateWorkerStatusRequest) returns (UpdateWorkerStatusResponse);
 
+    // Sends a periodic heartbeat to notify the Coordinator that the worker is alive
+    rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
     // Allows a worker to request/poll for an assigned task
     rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
 
@@ -97,4 +100,15 @@ message SubmitTaskResultRequest {
 message SubmitTaskResultResponse {
     bool success = 1;
     string message = 2;
+}
+
+// Worker heartbeat
+message HeartbeatRequest {
+    string worker_id = 1;             // Identifier of the sending worker
+    WorkerStatus status = 2;          // Optional current status of the worker
+}
+
+message HeartbeatResponse {
+    bool success = 1;                 // True if registered and heartbeat accepted
+    string message = 2;               // Optional informational message or instructions
 }

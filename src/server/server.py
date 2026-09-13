@@ -67,6 +67,22 @@ class WorkerCoordinator(
             success=False,
             message="Worker not found",
         )
+    
+    def Heartbeat(self, request, context):
+        success = self.worker_manager.update_status(
+            request.worker_id,
+            request.status,
+        )
+        
+        if success:
+            return filerpc_pb2.HeartbeatResponse(
+                success=True,
+                message="Heartbeat received",
+            )
+        return filerpc_pb2.HeartbeatResponse(
+            success=False,
+            message="Worker not found",
+        )
 
     def GetTask(self, request, context):
         task = self.task_manager.get_next_task()

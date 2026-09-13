@@ -1,112 +1,240 @@
+import sys
+import time
+import threading
+
 import grpc
 
 from src.rpc import filerpc_pb2
 from src.rpc import filerpc_pb2_grpc
+
 from src.processing.hashing import calculate_sha256
+from src.processing.pdf_extraction import extract_text_from_pdf
+from src.processing.resizing import resize_image
 
 
-SERVER_ADDRESS = "localhost:50051"
+class FileRPCWorker:
 
+    def __init__(self, worker_id, server_address="localhost:50051"):
+        self.worker_id = worker_id
+        self.server_address = server_address
 
-def start_worker():
+        self.address = "localhost"
 
-    worker_id = "worker-001"
+        self.capabilities = [
+            "hash",
+            "resize",
+            "extract",
+        ]
 
-    with grpc.insecure_channel(SERVER_ADDRESS) as channel:
+        self.status = filerpc_pb2.WORKER_STATUS_IDLE
 
-        stub = filerpc_pb2_grpc.WorkerCoordinatorStub(channel)
+        self.channel = None
+        self.stub = None
 
-        # Register worker
-        response = stub.RegisterWorker(
-            filerpc_pb2.RegisterWorkerRequest(
-                worker_id=worker_id,
-                address="localhost:50052",
-                capabilities=[
-                    "hash",
-                    "resize",
-                    "extract",
-                ],
-            )
+        self.running = False
+        self.heartbeat_thread = None
+
+    def connect(self):
+        print(
+            f"Connecting to FileRPC server at "
+            f"{self.server_address}..."
         )
 
-        registered_worker_id = response.worker_id
-
-        print("Registration:")
-        print("Success:", response.success)
-        print("Worker ID:", response.worker_id)
-        print("Message:", response.message)
-
-        # Update worker status
-        status_response = stub.UpdateWorkerStatus(
-            filerpc_pb2.UpdateWorkerStatusRequest(
-                worker_id=registered_worker_id,
-                status=filerpc_pb2.WORKER_STATUS_IDLE,
-            )
+        self.channel = grpc.insecure_channel(
+            self.server_address
         )
 
-        print("\nStatus update:")
-        print("Success:", status_response.success)
-        print("Message:", status_response.message)
-
-        # Request task
-        task_response = stub.GetTask(
-            filerpc_pb2.GetTaskRequest(
-                worker_id=registered_worker_id
-            )
+        self.stub = filerpc_pb2_grpc.WorkerCoordinatorStub(
+            self.channel
         )
 
-        print("\nTask:")
-        print("Has task:", task_response.has_task)
+        print("Connected to FileRPC server.")
 
-        if task_response.has_task:
+    def register(self):
+        print(f"Registering worker: {self.worker_id}")
 
-            task = task_response.task
+        request = filerpc_pb2.RegisterWorkerRequest(
+            worker_id=self.worker_id,
+            address=self.address,
+            capabilities=self.capabilities,
+        )
 
-            print("Task ID:", task.task_id)
-            print("Task type:", task.task_type)
-            print("File path:", task.file_path)
+        response = self.stub.RegisterWorker(request)
 
-            # Execute task
+        if response.success:
+            self.worker_id = response.worker_id
+
+            print("Worker registered successfully.")
+            print(f"Worker ID: {self.worker_id}")
+            print(f"Message: {response.message}")
+
+            return True
+
+        print("Worker registration failed.")
+        print(f"Message: {response.message}")
+
+        return False
+
+    def send_heartbeat(self):
+        try:
+            request = filerpc_pb2.HeartbeatRequest(
+                worker_id=self.worker_id,
+                status=self.status,
+            )
+
+            response = self.stub.Heartbeat(request)
+
+            if response.success:
+                print(
+                    f"[Heartbeat] {self.worker_id}: "
+                    f"{response.message}"
+                )
+            else:
+                print(
+                    f"[Heartbeat] Failed: "
+                    f"{response.message}"
+                )
+
+        except grpc.RpcError as e:
+            print(
+                f"[Heartbeat] Connection error: {e}"
+            )
+
+    def heartbeat_loop(self):
+        while self.running:
+            self.send_heartbeat()
+            time.sleep(5)
+
+    def start_heartbeat(self):
+        self.running = True
+
+        self.heartbeat_thread = threading.Thread(
+            target=self.heartbeat_loop,
+            daemon=True,
+        )
+
+        self.heartbeat_thread.start()
+
+        print("Heartbeat started.")
+
+    def get_task(self):
+        request = filerpc_pb2.GetTaskRequest(
+            worker_id=self.worker_id
+        )
+
+        response = self.stub.GetTask(request)
+
+        if response.has_task:
+            print("\nTask received:")
+            print(f"Task ID: {response.task.task_id}")
+            print(f"Task Type: {response.task.task_type}")
+            print(f"File: {response.task.file_path}")
+
+            return response.task
+
+        print("\nNo task available.")
+
+        return None
+
+    def execute_task(self, task):
+        print("\nExecuting task...")
+
+        try:
             if task.task_type == "hash":
+                result = calculate_sha256(
+                    task.file_path
+                )
 
-                try:
-                    result = calculate_sha256(task.file_path)
+                print("Hash task completed.")
+                print(f"SHA-256: {result}")
 
-                    print("\nTask Result:")
-                    print("SHA-256:", result)
+                return True, result
 
-                    # Submit result to server
-                    result_response = stub.SubmitTaskResult(
-                        filerpc_pb2.SubmitTaskResultRequest(
-                            worker_id=registered_worker_id,
-                            task_id=task.task_id,
-                            success=True,
-                            result=result,
-                        )
-                    )
+            if task.task_type == "extract":
+                result = extract_text_from_pdf(
+                    task.file_path
+                )
 
-                    print("\nResult Submission:")
-                    print("Success:", result_response.success)
-                    print("Message:", result_response.message)
+                print("PDF extraction completed.")
+                print(f"Extracted characters: {len(result)}")
 
-                except Exception as e:
+                return True, result
 
-                    result_response = stub.SubmitTaskResult(
-                        filerpc_pb2.SubmitTaskResultRequest(
-                            worker_id=registered_worker_id,
-                            task_id=task.task_id,
-                            success=False,
-                            error_message=str(e),
-                        )
-                    )
+            if task.task_type == "resize":
+                raise ValueError(
+                    "Resize task requires output path "
+                    "and dimensions."
+                )
 
-                    print("\nResult Submission:")
-                    print("Success:", result_response.success)
-                    print("Message:", result_response.message)
+            raise ValueError(
+                f"Unsupported task type: {task.task_type}"
+            )
 
-        else:
-            print("No task available.")
+        except Exception as e:
+            print(f"Task failed: {e}")
+
+            return False, str(e)
+
+    def stop(self):
+        self.running = False
+
+        if self.heartbeat_thread:
+            self.heartbeat_thread.join(timeout=2)
+
+        if self.channel:
+            self.channel.close()
+
+        print("Worker stopped.")
+
+    def start(self):
+        print("=" * 40)
+        print("FileRPC Worker")
+        print("=" * 40)
+
+        self.connect()
+
+        if not self.register():
+            self.stop()
+            return
+
+        print(
+            f"Capabilities: "
+            f"{', '.join(self.capabilities)}"
+        )
+
+        print("Status: IDLE")
+        print("Worker started successfully.")
+
+        self.start_heartbeat()
+
+        task = self.get_task()
+
+        if task:
+            self.execute_task(task)
+
+        try:
+            while True:
+                time.sleep(1)
+
+        except KeyboardInterrupt:
+            print("\nStopping worker...")
+
+        finally:
+            self.stop()
+
+
+def main():
+
+    worker_id = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else "worker-001"
+    )
+
+    worker = FileRPCWorker(worker_id)
+
+    worker.start()
 
 
 if __name__ == "__main__":
-    start_worker()
+    main()
