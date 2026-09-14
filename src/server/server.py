@@ -33,11 +33,6 @@ class WorkerCoordinator(
         self.worker_manager = WorkerManager()
         self.task_manager = TaskManager()
 
-        self.task_manager.add_task(
-            "hash",
-            "sample.txt",
-        )
-
     def RegisterWorker(self, request, context):
         worker_id = self.worker_manager.register_worker(
             request.worker_id,
@@ -98,6 +93,9 @@ class WorkerCoordinator(
                 task_id=task["task_id"],
                 task_type=task["task_type"],
                 file_path=task["file_path"],
+                output_path = task.get("output_path") or "",
+                width=task.get("width") or 0,
+                height=task.get("height") or 0,
             ),
         )
 

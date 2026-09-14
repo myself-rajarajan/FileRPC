@@ -78,6 +78,9 @@ message Task {
     string task_id = 1;               // Unique task identifier
     string task_type = 2;             // Type of processing (e.g., "hash", "resize", "extract")
     string file_path = 3;             // Source path of the file to process
+    string output_path = 4;
+    int32 width = 5;
+    int32 height = 6;
 }
 
 message GetTaskRequest {

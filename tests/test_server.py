@@ -1,10 +1,16 @@
 from src.server.server import WorkerCoordinator
 
+
 def test_submit_task_result():
     coordinator = WorkerCoordinator()
-    
+
+    task_id = coordinator.task_manager.add_task(
+        task_type="hash",
+        file_path="test.txt",
+    )
+
     task = coordinator.task_manager.get_next_task()
-    
+
     response = type(
         "Request",
         (),
@@ -16,15 +22,13 @@ def test_submit_task_result():
             "error_message": "",
         },
     )()
-    
+
     result = coordinator.SubmitTaskResult(response, None)
-    
+
     assert result.success is True
     assert result.message == "Task result received successfully"
-        
-    saved_task = coordinator.task_manager.get_task(
-        task["task_id"]
-    )
-    
+
+    saved_task = coordinator.task_manager.get_task(task_id)
+
     assert saved_task["status"] == "COMPLETED"
     assert saved_task["result"] == "test-sha256-result"

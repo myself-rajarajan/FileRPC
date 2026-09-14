@@ -135,7 +135,7 @@ class FileRPCWorker:
         print("\nNo task available.")
 
         return None
-
+    
     def execute_task(self, task):
         print("\nExecuting task...")
 
@@ -156,15 +156,38 @@ class FileRPCWorker:
                 )
 
                 print("PDF extraction completed.")
-                print(f"Extracted characters: {len(result)}")
+                print(
+                    f"Extracted characters: {len(result)}"
+                )
 
                 return True, result
 
             if task.task_type == "resize":
-                raise ValueError(
-                    "Resize task requires output path "
-                    "and dimensions."
+                if not task.output_path:
+                    raise ValueError(
+                        "Output path is required for resize."
+                    )
+
+                if task.width <= 0 or task.height <= 0:
+                    raise ValueError(
+                        "Width and height must be positive."
+                    )
+
+                resize_image(
+                    task.file_path,
+                    task.output_path,
+                    (task.width, task.height),
                 )
+
+                result = (
+                    f"Image resized successfully: "
+                    f"{task.output_path}"
+                )
+
+                print("Resize task completed.")
+                print(f"Output: {task.output_path}")
+
+                return True, result
 
             raise ValueError(
                 f"Unsupported task type: {task.task_type}"
@@ -174,7 +197,29 @@ class FileRPCWorker:
             print(f"Task failed: {e}")
 
             return False, str(e)
+        
+    def submit_task_result(self, task, success, result):
+        request = filerpc_pb2.SubmitTaskResultRequest(
+            worker_id=self.worker_id,
+            task_id=task.task_id,
+            success=success,
+            result=result if success else "",
+            error_message="" if success else result,
+    )
 
+        response = self.stub.SubmitTaskResult(request)
+
+        if response.success:
+            print(
+                f"Result reported successfully: "
+                f"{response.message}"
+            )
+        else:
+            print(
+                f"Result reporting failed: "
+                f"{response.message}"
+            )
+        
     def stop(self):
         self.running = False
 
@@ -210,7 +255,12 @@ class FileRPCWorker:
         task = self.get_task()
 
         if task:
-            self.execute_task(task)
+            success, result = self.execute_task(task)
+            self.submit_task_result(
+                task,
+                success,
+                result,
+            )
 
         try:
             while True:
